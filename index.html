@@ -5,276 +5,174 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Construtor de Prompts Jurídicos</title>
 <meta name="description" content="Ferramenta que monta prompts jurídicos estruturados, pronta a copiar. Por Ana Marta Soares, Especialista em IA aplicada ao Direito.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..600;1,9..144,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<meta name="theme-color" content="#6b4f8a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icone-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Prompts Jurídicos">
 <style>
-  html, body { margin: 0; }
-  img { max-width: 100%; }
-  [hidden] { display: none !important; }
+  /* Tipos de letra locais, para a app funcionar offline depois de instalada. */
+  @font-face { font-family:"Fraunces"; src:url("fonts/fraunces-600.woff2") format("woff2"); font-weight:600; font-display:swap; }
+  @font-face { font-family:"Inter"; src:url("fonts/inter-400.woff2") format("woff2"); font-weight:400; font-display:swap; }
+  @font-face { font-family:"Inter"; src:url("fonts/inter-500.woff2") format("woff2"); font-weight:500; font-display:swap; }
+  @font-face { font-family:"Inter"; src:url("fonts/inter-600.woff2") format("woff2"); font-weight:600; font-display:swap; }
+  @font-face { font-family:"JetBrains Mono"; src:url("fonts/mono-400.woff2") format("woff2"); font-weight:400; font-display:swap; }
+
+  /* Layout: formulário à esquerda, prompt montado à direita (fixo); empilha no telemóvel.
+     Paleta sóbria, registo jurídico, roxo como único acento. */
+  :root {
+    --bg:#f4f2ee; --surface:#fff; --ink:#1c1a17; --ink-soft:#595349;
+    --line:#ddd7cc; --accent:#6b4f8a; --accent-soft:#efe9f3; --code-bg:#faf8f4;
+    --ok:#3a6b4f; --warn-bg:#fbf1e3; --warn-ink:#8a5a1f; --warn-line:#e4c99a;
+    --fdisplay:"Fraunces",Georgia,serif; --fbody:"Inter",system-ui,sans-serif; --fmono:"JetBrains Mono",Consolas,monospace;
+  }
+  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+    --bg:#17151a; --surface:#201d25; --ink:#ece8f0; --ink-soft:#a79fb3;
+    --line:#35303d; --accent:#b79ad6; --accent-soft:#2a2333; --code-bg:#1a171f;
+    --ok:#7fc39d; --warn-bg:#2e2512; --warn-ink:#e3b878; --warn-line:#5a4720; color-scheme:dark; }}
+  :root[data-theme="dark"]{
+    --bg:#17151a; --surface:#201d25; --ink:#ece8f0; --ink-soft:#a79fb3;
+    --line:#35303d; --accent:#b79ad6; --accent-soft:#2a2333; --code-bg:#1a171f;
+    --ok:#7fc39d; --warn-bg:#2e2512; --warn-ink:#e3b878; --warn-line:#5a4720; color-scheme:dark; }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;}
+  img{max-width:100%;}
+  [hidden]{display:none !important;}
+  body{background:var(--bg); color:var(--ink); font-family:var(--fbody); line-height:1.5;}
+  .wrap{max-width:1180px; margin:0 auto;
+    padding-left:max(16px,env(safe-area-inset-left,0px));
+    padding-right:max(16px,env(safe-area-inset-right,0px)); padding-block:0;}
+
+  header{padding-block:2.2rem 1.4rem; border-bottom:1px solid var(--line);}
+  .brandrow{display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;}
+  .eyebrow{font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); font-weight:600; margin:0 0 .5rem;}
+  h1{font-family:var(--fdisplay); font-weight:600; font-size:clamp(1.8rem,4.5vw,2.7rem); line-height:1.08; letter-spacing:-.01em; text-wrap:balance; margin:0 0 .6rem;}
+  .lede{color:var(--ink-soft); max-width:60ch; font-size:1.02rem; margin:0;}
+  .install{font-family:inherit; font-size:.85rem; font-weight:600; color:var(--accent); background:var(--accent-soft);
+    border:1px solid var(--accent); border-radius:8px; padding:.5rem .9rem; cursor:pointer; white-space:nowrap;}
+  .install[hidden]{display:none !important;}
+
+  /* Exemplos */
+  .examples{padding-block:1.4rem .2rem;}
+  .examples h2{font-family:var(--fdisplay); font-size:1.05rem; font-weight:600; margin:0 0 .2rem;}
+  .examples p{color:var(--ink-soft); font-size:.86rem; margin:0 0 .8rem;}
+  .exrow{display:flex; gap:.5rem; flex-wrap:wrap;}
+  .ex{font-family:inherit; font-size:.84rem; text-align:left; color:var(--ink); background:var(--surface);
+    border:1px solid var(--line); border-radius:8px; padding:.5rem .8rem; cursor:pointer;}
+  .ex:hover{border-color:var(--accent);}
+  .ex b{display:block; font-weight:600;}
+  .ex small{color:var(--ink-soft);}
+
+  main{display:grid; grid-template-columns:1fr 1fr; gap:2rem; padding-block:1.6rem 1rem; align-items:start;}
+  @media (max-width:820px){ main{grid-template-columns:1fr; gap:1.4rem;} }
+  .panel{min-width:0;}
+  .field{margin-bottom:1.4rem;}
+  .field > label.q{display:block; font-weight:600; font-size:.95rem; margin-bottom:.1rem;}
+  .field .hint{display:block; color:var(--ink-soft); font-size:.82rem; margin-bottom:.55rem;}
+  .chips{display:flex; flex-wrap:wrap; gap:.5rem;}
+  .chip{font-family:inherit; font-size:.86rem; color:var(--ink); background:var(--surface);
+    border:1px solid var(--line); border-radius:999px; padding:.42rem .85rem; cursor:pointer;
+    transition:border-color .12s,background .12s,color .12s;}
+  .chip:hover{border-color:var(--accent);}
+  .chip[aria-pressed="true"]{background:var(--accent); border-color:var(--accent); color:#fff;}
+  input[type="text"],textarea{width:100%; font-family:inherit; font-size:.95rem; color:var(--ink);
+    background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:.6rem .7rem; resize:vertical;}
+  textarea{min-height:5rem; line-height:1.45;}
+  input:focus,textarea:focus,.chip:focus-visible,button:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
+
+  .warn{margin-top:.55rem; display:flex; gap:.55rem; align-items:flex-start;
+    background:var(--warn-bg); border:1px solid var(--warn-line); border-radius:8px; padding:.55rem .7rem;
+    font-size:.82rem; color:var(--warn-ink);}
+  .warn b{font-weight:600;}
+
+  .toggle-row{display:flex; align-items:flex-start; gap:.6rem; padding:.55rem 0; border-top:1px solid var(--line);}
+  .toggle-row:first-of-type{border-top:none;}
+  .toggle-row input{width:1.05rem; height:1.05rem; margin-top:.18rem; accent-color:var(--accent); flex:none;}
+  .toggle-row .tlabel{font-size:.9rem;}
+  .toggle-row .tlabel small{display:block; color:var(--ink-soft); font-size:.78rem;}
+
+  .result{position:sticky; top:calc(1rem + env(safe-area-inset-top,0px));
+    background:var(--surface); border:1px solid var(--line); border-radius:12px; overflow:hidden;}
+  @media (max-width:820px){ .result{position:static;} }
+  .result-head{display:flex; align-items:center; justify-content:space-between; gap:.5rem;
+    padding:.85rem 1rem; border-bottom:1px solid var(--line); flex-wrap:wrap;}
+  .result-head h2{font-family:var(--fdisplay); font-size:1.05rem; font-weight:600; margin:0; flex:1;}
+  .btn{font-family:inherit; font-size:.85rem; font-weight:600; border-radius:7px; padding:.5rem .9rem; cursor:pointer; white-space:nowrap; border:1px solid var(--line); background:var(--surface); color:var(--ink);}
+  .btn.primary{color:#fff; background:var(--accent); border-color:var(--accent);}
+  .btn.done{background:var(--ok); border-color:var(--ok); color:#fff;}
+  pre.out{margin:0; padding:1rem; font-family:var(--fmono); font-size:.82rem; line-height:1.55;
+    white-space:pre-wrap; word-wrap:break-word; color:var(--ink); background:var(--code-bg);
+    max-height:58vh; overflow-y:auto; min-width:0;}
+
+  .saved{padding:.4rem 1rem 1rem;}
+  .saved h3{font-size:.8rem; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-soft); margin:.6rem 0 .5rem;}
+  .saved ul{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:.35rem;}
+  .saved li{display:flex; align-items:center; gap:.5rem; font-size:.84rem;}
+  .saved li button.load{flex:1; text-align:left; background:none; border:none; color:var(--accent); cursor:pointer; font-family:inherit; font-size:.84rem; padding:.2rem 0;}
+  .saved li button.del{background:none; border:none; color:var(--ink-soft); cursor:pointer; font-size:1rem; line-height:1;}
+
+  footer{border-top:1px solid var(--line); padding-block:1.4rem 2.4rem; color:var(--ink-soft); font-size:.82rem; text-align:center;}
+  footer strong{color:var(--ink); font-weight:600;}
+  .seal{font-family:var(--fdisplay); font-style:italic;}
 </style>
 </head>
 <body>
-<style>
-  /* Layout: duas colunas em ecrã largo (formulário à esquerda, prompt montado à direita),
-     empilhadas em coluna no telemóvel. Paleta sóbria, registo jurídico, sem ornamento. */
-  :root {
-    --bg: #f4f2ee;
-    --surface: #ffffff;
-    --ink: #1c1a17;
-    --ink-soft: #595349;
-    --line: #ddd7cc;
-    --accent: #6b4f8a;
-    --accent-soft: #efe9f3;
-    --code-bg: #faf8f4;
-    --ok: #3a6b4f;
-    --font-display: "Fraunces", Georgia, "Times New Roman", serif;
-    --font-body: "Inter", system-ui, -apple-system, sans-serif;
-    --font-mono: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --bg: #17151a;
-      --surface: #201d25;
-      --ink: #ece8f0;
-      --ink-soft: #a79fb3;
-      --line: #35303d;
-      --accent: #b79ad6;
-      --accent-soft: #2a2333;
-      --code-bg: #1a171f;
-      --ok: #7fc39d;
-      color-scheme: dark;
-    }
-  }
-  :root[data-theme="dark"] {
-    --bg: #17151a;
-    --surface: #201d25;
-    --ink: #ece8f0;
-    --ink-soft: #a79fb3;
-    --line: #35303d;
-    --accent: #b79ad6;
-    --accent-soft: #2a2333;
-    --code-bg: #1a171f;
-    --ok: #7fc39d;
-    color-scheme: dark;
-  }
-  * { box-sizing: border-box; }
-  body {
-    background: var(--bg);
-    color: var(--ink);
-    font-family: var(--font-body);
-    line-height: 1.5;
-    margin: 0;
-  }
-  .wrap {
-    max-width: 1180px;
-    margin: 0 auto;
-    padding-left: max(16px, env(safe-area-inset-left, 0px));
-    padding-right: max(16px, env(safe-area-inset-right, 0px));
-    padding-block: 0;
-  }
-  header {
-    padding-block: 2.4rem 1.6rem;
-    border-bottom: 1px solid var(--line);
-  }
-  .eyebrow {
-    font-size: 0.72rem;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--accent);
-    font-weight: 600;
-    margin: 0 0 0.6rem;
-  }
-  h1 {
-    font-family: var(--font-display);
-    font-weight: 600;
-    font-size: clamp(1.8rem, 4.5vw, 2.7rem);
-    line-height: 1.08;
-    letter-spacing: -0.01em;
-    text-wrap: balance;
-    margin: 0 0 0.7rem;
-  }
-  .lede {
-    color: var(--ink-soft);
-    max-width: 60ch;
-    font-size: 1.02rem;
-    margin: 0;
-  }
-  main {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2rem;
-    padding-block: 2rem 1rem;
-    align-items: start;
-  }
-  @media (max-width: 820px) {
-    main { grid-template-columns: 1fr; gap: 1.4rem; }
-  }
-  .panel { min-width: 0; }
-  .field { margin-bottom: 1.5rem; }
-  .field > label.q {
-    display: block;
-    font-weight: 600;
-    font-size: 0.95rem;
-    margin-bottom: 0.1rem;
-  }
-  .field .hint {
-    display: block;
-    color: var(--ink-soft);
-    font-size: 0.82rem;
-    margin-bottom: 0.6rem;
-  }
-  .chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-  .chip {
-    font-family: inherit;
-    font-size: 0.86rem;
-    color: var(--ink);
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 999px;
-    padding: 0.42rem 0.85rem;
-    cursor: pointer;
-    transition: border-color .12s, background .12s, color .12s;
-  }
-  .chip:hover { border-color: var(--accent); }
-  .chip[aria-pressed="true"] {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #fff;
-  }
-  :root[data-theme="dark"] .chip[aria-pressed="true"],
-  @media (prefers-color-scheme: dark) { }
-  input[type="text"], textarea, select {
-    width: 100%;
-    font-family: inherit;
-    font-size: 0.95rem;
-    color: var(--ink);
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    padding: 0.6rem 0.7rem;
-    resize: vertical;
-  }
-  textarea { min-height: 4.5rem; line-height: 1.45; }
-  input:focus, textarea:focus, select:focus, .chip:focus-visible, button:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 1px;
-  }
-  .toggle-row {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.6rem;
-    padding: 0.55rem 0;
-    border-top: 1px solid var(--line);
-  }
-  .toggle-row:first-of-type { border-top: none; }
-  .toggle-row input { width: 1.05rem; height: 1.05rem; margin-top: 0.18rem; accent-color: var(--accent); flex: none; }
-  .toggle-row .tlabel { font-size: 0.9rem; }
-  .toggle-row .tlabel small { display: block; color: var(--ink-soft); font-size: 0.78rem; }
-  /* Coluna do resultado */
-  .result {
-    position: sticky;
-    top: calc(1rem + env(safe-area-inset-top, 0px));
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    overflow: hidden;
-  }
-  @media (max-width: 820px) { .result { position: static; } }
-  .result-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.6rem;
-    padding: 0.9rem 1rem;
-    border-bottom: 1px solid var(--line);
-  }
-  .result-head h2 {
-    font-family: var(--font-display);
-    font-size: 1.05rem;
-    font-weight: 600;
-    margin: 0;
-  }
-  .copybtn {
-    font-family: inherit;
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #fff;
-    background: var(--accent);
-    border: none;
-    border-radius: 7px;
-    padding: 0.5rem 0.95rem;
-    cursor: pointer;
-    white-space: nowrap;
-  }
-  .copybtn.done { background: var(--ok); }
-  pre.out {
-    margin: 0;
-    padding: 1rem;
-    font-family: var(--font-mono);
-    font-size: 0.82rem;
-    line-height: 1.55;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    color: var(--ink);
-    background: var(--code-bg);
-    max-height: 60vh;
-    overflow-y: auto;
-    min-width: 0;
-  }
-  footer {
-    border-top: 1px solid var(--line);
-    padding-block: 1.4rem 2.2rem;
-    color: var(--ink-soft);
-    font-size: 0.82rem;
-    text-align: center;
-  }
-  footer strong { color: var(--ink); font-weight: 600; }
-  .seal {
-    font-family: var(--font-display);
-    font-style: italic;
-  }
-</style>
-
 <div class="wrap">
   <header>
-    <p class="eyebrow">Do Pedido ao Resultado</p>
-    <h1>Construtor de Prompts Jurídicos</h1>
-    <p class="lede">Escolha a tarefa, defina o papel, preencha o essencial. A instrução monta-se ao lado, estruturada nos cinco elementos de um bom prompt, pronta a copiar para o ChatGPT, o Claude, o Gemini ou o Copilot.</p>
+    <div class="brandrow">
+      <div>
+        <p class="eyebrow">Do Pedido ao Resultado</p>
+        <h1>Construtor de Prompts Jurídicos</h1>
+      </div>
+      <button class="install" id="install" hidden>Instalar aplicação</button>
+    </div>
+    <p class="lede">Escolha a tarefa, defina o papel e escreva o essencial. A instrução monta-se ao lado, estruturada como um bom prompt se estrutura, pronta a copiar para o ChatGPT, o Claude, o Gemini ou o Copilot.</p>
   </header>
+
+  <section class="examples">
+    <h2>Comece por um exemplo</h2>
+    <p>Carregue para preencher a ferramenta com um caso ilustrativo e ver logo o resultado.</p>
+    <div class="exrow" id="exrow"></div>
+  </section>
 
   <main>
     <div class="panel">
       <div class="field">
         <label class="q">1. Que tarefa quer pedir?</label>
-        <span class="hint">O verbo da tarefa e a estrutura mudam conforme a escolha.</span>
+        <span class="hint">O verbo e a estrutura do prompt mudam conforme a escolha.</span>
         <div class="chips" id="tarefas" role="group" aria-label="Tarefa"></div>
       </div>
 
       <div class="field">
         <label class="q" for="area">2. Qual a sua área e o papel do modelo?</label>
         <span class="hint">Escolha uma área ou escreva a sua.</span>
-        <div class="chips" id="areas" role="group" aria-label="Área" style="margin-bottom:.6rem"></div>
+        <div class="chips" id="areas" role="group" aria-label="Área" style="margin-bottom:.55rem"></div>
         <input type="text" id="area" placeholder="Área de prática (ex.: direito do trabalho)">
       </div>
 
       <div class="field">
         <label class="q" for="parte">3. Quem representa?</label>
         <span class="hint">Define o lado de que o modelo deve olhar para os factos.</span>
-        <div class="chips" id="partes" role="group" aria-label="Parte" style="margin-bottom:.6rem"></div>
+        <div class="chips" id="partes" role="group" aria-label="Parte" style="margin-bottom:.55rem"></div>
         <input type="text" id="parte" placeholder="A parte que representa (ex.: o trabalhador)">
       </div>
 
       <div class="field">
         <label class="q" for="dest">4. Para quem é o resultado?</label>
-        <div class="chips" id="dests" role="group" aria-label="Destinatário" style="margin-bottom:.6rem"></div>
+        <div class="chips" id="dests" role="group" aria-label="Destinatário" style="margin-bottom:.55rem"></div>
         <input type="text" id="dest" placeholder="Destinatário (ex.: nota interna para o sócio)">
       </div>
 
       <div class="field">
         <label class="q" for="material">5. O essencial do caso</label>
-        <span class="hint">Em duas linhas, o que o modelo precisa de saber. Não escreva nomes nem dados de clientes: use expressões genéricas.</span>
+        <span class="hint">Em duas ou três linhas, o que o modelo precisa de saber. Não escreva nomes nem dados de clientes: use expressões genéricas.</span>
         <textarea id="material" placeholder="Ex.: cláusula de não concorrência de cinco anos, sem compensação, num contrato de trabalho já cessado."></textarea>
+        <div class="warn" id="warn" hidden>
+          <span aria-hidden="true">⚠</span>
+          <span><b>Atenção aos dados pessoais.</b> O texto parece conter um nome, um NIF ou outro dado identificável. Substitua por expressões genéricas antes de copiar, para não quebrar o sigilo nem o RGPD.</span>
+        </div>
       </div>
 
       <div class="field">
@@ -298,191 +196,246 @@
       <div class="result">
         <div class="result-head">
           <h2>O seu prompt</h2>
-          <button class="copybtn" id="copy" type="button">Copiar</button>
+          <button class="btn" id="save" type="button">Guardar</button>
+          <button class="btn primary" id="copy" type="button">Copiar</button>
         </div>
         <pre class="out" id="out" aria-live="polite"></pre>
+        <div class="saved" id="savedbox" hidden>
+          <h3>Guardados neste dispositivo</h3>
+          <ul id="savedlist"></ul>
+        </div>
       </div>
     </div>
   </main>
 
   <footer>
     <p class="seal"><strong>Ana Marta Soares</strong>, Especialista em IA aplicada ao Direito</p>
-    <p>Ferramenta de apoio à formação. Confirme sempre em fonte primária antes de usar o resultado numa peça.</p>
+    <p>Ferramenta de apoio ao trabalho jurídico. Confirme sempre em fonte primária antes de usar o resultado numa peça.</p>
   </footer>
 </div>
 
 <script>
   var TAREFAS = {
-    analisar: {
-      rotulo: "Analisar um documento",
-      verbo: "Identifica os pontos relevantes e os riscos do documento abaixo",
-      formato: "Tabela com as colunas: Ponto | Em que consiste | Risco (Alto/Médio/Baixo) | Fundamento.\nNo fim, uma secção \"TRÊS PONTOS A LEVANTAR\" com uma frase cada.",
-      objecto: "o documento"
-    },
-    clausula: {
-      rotulo: "Avaliar uma cláusula",
-      verbo: "Identifica cada requisito de validade que a cláusula abaixo possa violar",
-      formato: "Tabela com as colunas: Requisito legal | Em que consiste o vício | Consequência jurídica.\nNo fim, uma secção \"POSIÇÃO A ASSUMIR\" em não mais de 80 palavras.",
-      objecto: "a cláusula"
-    },
-    cronologia: {
-      rotulo: "Construir uma cronologia",
-      verbo: "Constrói uma cronologia dos factos a partir dos elementos abaixo",
-      formato: "Tabela com as colunas: Data | Facto | Fonte | Prova existente? (Sim/Não/A obter) | Relevância.\nDepois, três secções: \"LACUNAS\", \"CONTRADIÇÕES\" e \"DOCUMENTOS A SOLICITAR\".",
-      objecto: "os factos"
-    },
-    inquiricao: {
-      rotulo: "Preparar uma inquirição",
-      verbo: "Prepara a inquirição da testemunha a partir dos factos abaixo",
-      formato: "1. Os factos a obter da testemunha.\n2. Para cada facto, perguntas fechadas e numeradas, de resposta sim/não.\n3. \"PERGUNTAS A EVITAR\".\nRestrição adicional: nunca uma pergunta cuja resposta eu não conheça de antemão.",
-      objecto: "os factos"
-    },
-    prognostico: {
-      rotulo: "Prever a decisão",
-      verbo: "Faz o prognóstico de como um tribunal decidiria o caso abaixo",
-      formato: "Separa os factos em: Favorecem uma parte | Favorecem a outra | Por provar.\nIndica o critério aplicável, pesa os factos e termina com o sentido provável da decisão e uma estimativa de probabilidade.\nNo fim, \"O FACTO QUE DECIDE O CASO\".",
-      objecto: "o caso"
-    },
-    cliente: {
-      rotulo: "Explicar ao cliente",
-      verbo: "Explica a situação abaixo a um cliente sem formação jurídica",
-      formato: "Frases curtas. Sem citar artigos. Começa pela resposta directa à pergunta prática do cliente e só depois explica. Máximo 150 palavras. Termina com uma acção concreta a tomar.",
-      objecto: "a situação"
-    },
-    minuta: {
-      rotulo: "Redigir uma minuta",
-      verbo: "Redige a minuta correspondente à situação abaixo",
-      formato: "Minuta completa, com os factos numerados e os campos de preenchimento assinalados entre [PARÊNTESES RECTOS].",
-      objecto: "a situação"
-    }
+    clausula:{rotulo:"Avaliar uma cláusula", verbo:"Identifica cada requisito de validade que a cláusula abaixo possa violar",
+      formato:"Tabela com as colunas: Requisito legal | Em que consiste o vício | Consequência jurídica.\nNo fim, uma secção \"POSIÇÃO A ASSUMIR\" em não mais de 80 palavras.", objecto:"a cláusula"},
+    analisar:{rotulo:"Analisar um documento", verbo:"Identifica os pontos relevantes e os riscos do documento abaixo",
+      formato:"Tabela com as colunas: Ponto | Em que consiste | Risco (Alto/Médio/Baixo) | Fundamento.\nNo fim, uma secção \"TRÊS PONTOS A LEVANTAR\" com uma frase cada.", objecto:"o documento"},
+    versoes:{rotulo:"Comparar duas versões", verbo:"Identifica todas as alterações entre as duas versões abaixo, incluindo as que parecem cosméticas",
+      formato:"Tabela com as colunas: Cláusula | Redacção original (excerto) | Nova redacção (excerto) | O que mudou na prática | A favor de quem | Gravidade.\nDepois, uma secção \"ALTERAÇÕES DISFARÇADAS\": mudanças que parecem redacção mas alteram o efeito jurídico.", objecto:"o texto"},
+    cronologia:{rotulo:"Construir uma cronologia", verbo:"Constrói uma cronologia dos factos a partir dos elementos abaixo",
+      formato:"Tabela com as colunas: Data | Facto | Fonte | Prova existente? (Sim/Não/A obter) | Relevância.\nDepois, três secções: \"LACUNAS\", \"CONTRADIÇÕES\" e \"DOCUMENTOS A SOLICITAR\".", objecto:"os factos"},
+    contradicoes:{rotulo:"Detectar contradições", verbo:"Cruza os elementos abaixo e constrói um quadro das contradições entre eles",
+      formato:"Tabela com as colunas: Facto em causa | O que diz cada fonte | Fontes que se contradizem | Versão mais frágil.\nNo fim, \"A CONTRADIÇÃO DECISIVA\": a que, sozinha, abala a versão contrária.", objecto:"os depoimentos e documentos"},
+    prazos:{rotulo:"Extrair prazos e obrigações", verbo:"Extrai do documento abaixo todas as obrigações com relevância temporal e constrói um calendário de gestão",
+      formato:"Tabela com as colunas: Data ou marco | Obrigação | Parte responsável | Consequência do incumprimento.\nDepois: \"PRAZOS QUE CORREM CONTRA MIM\" e \"PRAZOS SEM DATA CERTA\".", objecto:"o documento"},
+    inquiricao:{rotulo:"Preparar uma inquirição", verbo:"Prepara a inquirição da testemunha a partir dos factos abaixo",
+      formato:"1. Os factos a obter da testemunha.\n2. Para cada facto, perguntas fechadas e numeradas, de resposta sim/não.\n3. \"PERGUNTAS A EVITAR\".\nRestrição adicional: nunca uma pergunta cuja resposta eu não conheça de antemão.", objecto:"os factos"},
+    prognostico:{rotulo:"Prever a decisão", verbo:"Faz o prognóstico de como um tribunal decidiria o caso abaixo",
+      formato:"Separa os factos em: Favorecem uma parte | Favorecem a outra | Por provar.\nIndica o critério aplicável, pesa os factos e termina com o sentido provável da decisão e uma estimativa de probabilidade.\nNo fim, \"O FACTO QUE DECIDE O CASO\".", objecto:"o caso"},
+    resumo:{rotulo:"Resumir um processo", verbo:"Resume o processo abaixo para quem o vai pegar sem o ter lido",
+      formato:"1. O litígio em três linhas.\n2. Posição de cada parte.\n3. Questões a decidir.\n4. Estado actual e próximo passo processual.\nMáximo uma página.", objecto:"o processo"},
+    cliente:{rotulo:"Explicar ao cliente", verbo:"Explica a situação abaixo a um cliente sem formação jurídica",
+      formato:"Frases curtas. Sem citar artigos. Começa pela resposta directa à pergunta prática do cliente e só depois explica. Máximo 150 palavras. Termina com uma acção concreta a tomar.", objecto:"a situação"},
+    minuta:{rotulo:"Redigir uma minuta", verbo:"Redige a minuta correspondente à situação abaixo",
+      formato:"Minuta completa, com os factos numerados e os campos de preenchimento assinalados entre [PARÊNTESES RECTOS].", objecto:"a situação"}
   };
 
-  var AREAS = ["direito do trabalho","direito comercial","direito civil","família e sucessões","contratação pública","direito administrativo","protecção de dados"];
-  var PARTES = ["o trabalhador","a empresa","o autor","o réu","o consumidor","nenhuma (análise neutra)"];
-  var DESTS = ["nota interna para o sócio","uma peça processual","o cliente","uma reunião de negociação"];
+  var AREAS=["direito do trabalho","direito comercial","direito civil","família e sucessões","contratação pública","direito administrativo","protecção de dados"];
+  var PARTES=["o trabalhador","a empresa","o autor","o réu","o consumidor","nenhuma (análise neutra)"];
+  var DESTS=["nota interna para o sócio","uma peça processual","o cliente","uma reunião de negociação"];
 
-  var estado = { tarefa: "clausula", area: "", parte: "", dest: "" };
+  var EXEMPLOS=[
+    {titulo:"Cláusula viciada", sub:"não concorrência abusiva",
+      tarefa:"clausula", area:"direito do trabalho", parte:"o trabalhador", dest:"nota interna para o sócio",
+      material:"Cláusula de não concorrência de cinco anos após a cessação do contrato, sem qualquer compensação, abrangendo todo o território nacional e o Reino de Espanha, com cláusula penal de 150.000 euros."},
+    {titulo:"Contrato alterado", sub:"o que mudou na nova versão",
+      tarefa:"versoes", area:"direito comercial", parte:"", dest:"nota interna para o sócio",
+      material:"Versão 1: penalidade por atraso até ao limite de 5.000 euros; pagamento a 30 dias após emissão da factura.\nVersão 2: penalidade por atraso sem prejuízo de indemnização por danos excedentes; pagamento a 30 dias após recepção e validação da factura."},
+    {titulo:"Resolução com justa causa", sub:"prever como o tribunal decide",
+      tarefa:"prognostico", area:"direito do trabalho", parte:"o trabalhador", dest:"nota interna para o sócio",
+      material:"Trabalhador resolveu o contrato por falta de pagamento dos salários de três meses. A empresa comunicou dificuldades de tesouraria e fez um pagamento parcial antes da resolução. A empresa despediu sem audiência prévia em processo disciplinar."}
+  ];
 
-  function montarChips(containerId, valores, campo, inputId) {
-    var c = document.getElementById(containerId);
-    valores.forEach(function (v) {
-      var b = document.createElement("button");
-      b.type = "button";
-      b.className = "chip";
-      b.textContent = (campo === "tarefa") ? TAREFAS[v].rotulo : v;
-      b.setAttribute("aria-pressed", "false");
-      b.addEventListener("click", function () {
-        if (campo === "tarefa") {
-          estado.tarefa = v;
-          marcarUnico(c, b);
-        } else {
-          var inp = document.getElementById(inputId);
-          var jaActivo = b.getAttribute("aria-pressed") === "true";
-          marcarUnico(c, jaActivo ? null : b);
-          inp.value = (jaActivo || v.indexOf("nenhuma") === 0) ? (v.indexOf("nenhuma") === 0 && !jaActivo ? "" : "") : v;
-          if (v.indexOf("nenhuma") === 0 && !jaActivo) inp.value = "";
+  var estado={tarefa:"clausula"};
+
+  function el(id){return document.getElementById(id);}
+  function val(id){return el(id).value.trim();}
+
+  function chipsDe(containerId, valores, inputId, campo){
+    var c=el(containerId);
+    valores.forEach(function(v){
+      var b=document.createElement("button");
+      b.type="button"; b.className="chip";
+      b.textContent=(campo==="tarefa")?TAREFAS[v].rotulo:v;
+      b.setAttribute("aria-pressed","false");
+      b.dataset.valor=v;
+      b.addEventListener("click", function(){
+        if(campo==="tarefa"){ estado.tarefa=v; marcar(c,b); }
+        else {
+          var inp=el(inputId);
+          var activo=b.getAttribute("aria-pressed")==="true";
+          marcar(c, activo?null:b);
+          inp.value = activo ? "" : (v.indexOf("nenhuma")===0 ? "" : v);
         }
         render();
       });
       c.appendChild(b);
     });
   }
-  function marcarUnico(container, botao) {
-    container.querySelectorAll(".chip").forEach(function (x) { x.setAttribute("aria-pressed", "false"); });
-    if (botao) botao.setAttribute("aria-pressed", "true");
+  function marcar(container, botao){
+    container.querySelectorAll(".chip").forEach(function(x){x.setAttribute("aria-pressed","false");});
+    if(botao) botao.setAttribute("aria-pressed","true");
   }
 
-  function val(id) { return document.getElementById(id).value.trim(); }
+  // Deteccção simples de dados pessoais, para avisar antes de copiar.
+  function temDadosPessoais(t){
+    if(!t) return false;
+    if(/\b\d{9}\b/.test(t)) return true;                       // NIF/NISS/telefone
+    if(/\b\d{1,3}\s?\d{3}\s?\d{3}\b/.test(t)) return true;      // números espaçados
+    if(/\b[A-Za-zÀ-ÿ]+\s+[A-Za-zÀ-ÿ]+\s+[A-Za-zÀ-ÿ]+\b/.test(t)){ // três palavras capitalizadas = nome
+      var nomes=t.match(/\b[A-ZÀ-Ý][a-zà-ÿ]+\s+[A-ZÀ-Ý][a-zà-ÿ]+(?:\s+[A-ZÀ-Ý][a-zà-ÿ]+)+\b/);
+      if(nomes) return true;
+    }
+    return false;
+  }
 
-  function render() {
-    var t = TAREFAS[estado.tarefa];
-    var area = val("area") || "[área de prática]";
-    var parte = val("parte");
-    var dest = val("dest") || "[destinatário]";
-    var material = val("material") || "[colar aqui o documento, a cláusula ou os factos]";
-    var representa = (parte && parte.indexOf("nenhuma") !== 0) ? parte : "";
-
-    var L = [];
-    L.push("Actua como advogado especialista em " + area + ", no ordenamento jurídico português.");
-    if (representa) L.push("Represento " + representa + ".");
+  function construir(){
+    var t=TAREFAS[estado.tarefa];
+    var area=val("area")||"[área de prática]";
+    var parte=val("parte");
+    var dest=val("dest")||"[destinatário]";
+    var material=val("material")||"[colar aqui o documento, a cláusula ou os factos]";
+    var representa=(parte && parte.indexOf("nenhuma")!==0)?parte:"";
+    var L=[];
+    L.push("Actua como advogado especialista em "+area+", no ordenamento jurídico português.");
+    if(representa) L.push("Represento "+representa+".");
     L.push("");
-    L.push("TAREFA: " + t.verbo + ", com base exclusivamente no material fornecido.");
+    L.push("TAREFA: "+t.verbo+", com base exclusivamente no material fornecido.");
     L.push("");
-
-    if (document.getElementById("opt-passos").checked) {
-      L.push("RACIOCÍNIO: antes de concluíres, raciocina em passos numerados. Decompõe " + t.objecto + " nos seus elementos, confronta cada um com o que a lei exige e só no fim apresenta a conclusão. Não antecipes a conclusão.");
+    if(el("opt-passos").checked){
+      L.push("RACIOCÍNIO: antes de concluíres, raciocina em passos numerados. Decompõe "+t.objecto+" nos seus elementos, confronta cada um com o que a lei exige e só no fim apresenta a conclusão. Não antecipes a conclusão.");
       L.push("");
     }
-
     L.push("FORMATO:");
     L.push(t.formato);
     L.push("");
-
-    var restr = [];
-    restr.push("Baseia-te exclusivamente no material fornecido.");
-    if (document.getElementById("opt-naoconsta").checked) {
-      restr.push("Se a informação não constar, escreve \"NÃO CONSTA\" e indica o que seria necessário. É proibido deduzir ou presumir.");
-      restr.push("Não cites jurisprudência. Se precisares dela, indica apenas a questão a pesquisar, sem inventar referências.");
+    var r=["Baseia-te exclusivamente no material fornecido."];
+    if(el("opt-naoconsta").checked){
+      r.push("Se a informação não constar, escreve \"NÃO CONSTA\" e indica o que seria necessário. É proibido deduzir ou presumir.");
+      r.push("Não cites jurisprudência. Se precisares dela, indica apenas a questão a pesquisar, sem inventar referências.");
     }
-    restr.push("Não faças cálculos. Se houver contas, escreve a fórmula.");
+    r.push("Não faças cálculos. Se houver contas, escreve a fórmula.");
     L.push("RESTRIÇÕES:");
-    restr.forEach(function (r) { L.push("- " + r); });
+    r.forEach(function(x){L.push("- "+x);});
     L.push("");
-
-    L.push("TOM: destino a " + dest + ". Sem preâmbulos e sem adjectivação.");
+    L.push("TOM: destino a "+dest+". Sem preâmbulos e sem adjectivação.");
     L.push("");
     L.push("MATERIAL:");
-    L.push("---");
-    L.push(material);
-    L.push("---");
-
-    if (document.getElementById("opt-contraparte").checked) {
+    L.push("---"); L.push(material); L.push("---");
+    if(el("opt-contraparte").checked){
       L.push("");
       L.push("Depois da resposta, muda de lado: passa a ser o advogado da parte contrária e apresenta os três argumentos que mais abalam a análise anterior. No fim, diz o que eu deveria reforçar antes de a usar.");
     }
-
-    document.getElementById("out").textContent = L.join("\n");
+    return L.join("\n");
   }
 
-  montarChips("tarefas", Object.keys(TAREFAS), "tarefa");
-  montarChips("areas", AREAS, "area", "area");
-  montarChips("partes", PARTES, "parte", "parte");
-  montarChips("dests", DESTS, "dest", "dest");
+  function render(){
+    el("out").textContent=construir();
+    el("warn").hidden = !temDadosPessoais(val("material"));
+  }
 
-  // pré-selecção inicial
-  document.querySelectorAll("#tarefas .chip").forEach(function (b) {
-    if (b.textContent === TAREFAS.clausula.rotulo) b.setAttribute("aria-pressed", "true");
+  // Exemplos
+  (function(){
+    var row=el("exrow");
+    EXEMPLOS.forEach(function(ex){
+      var b=document.createElement("button");
+      b.type="button"; b.className="ex";
+      b.innerHTML="<b></b><small></small>";
+      b.querySelector("b").textContent=ex.titulo;
+      b.querySelector("small").textContent=ex.sub;
+      b.addEventListener("click", function(){
+        estado.tarefa=ex.tarefa;
+        el("area").value=ex.area; el("parte").value=ex.parte||""; el("dest").value=ex.dest; el("material").value=ex.material;
+        document.querySelectorAll("#tarefas .chip").forEach(function(c){ c.setAttribute("aria-pressed", c.dataset.valor===ex.tarefa ? "true":"false"); });
+        sincronizarChip("areas","area"); sincronizarChip("partes","parte"); sincronizarChip("dests","dest");
+        render();
+        document.querySelector("main").scrollIntoView({behavior:"smooth", block:"start"});
+      });
+      row.appendChild(b);
+    });
+  })();
+  function sincronizarChip(containerId, inputId){
+    var v=el(inputId).value.trim();
+    document.querySelectorAll("#"+containerId+" .chip").forEach(function(c){
+      c.setAttribute("aria-pressed", c.dataset.valor===v ? "true":"false");
+    });
+  }
+
+  chipsDe("tarefas", Object.keys(TAREFAS), null, "tarefa");
+  chipsDe("areas", AREAS, "area", "area");
+  chipsDe("partes", PARTES, "parte", "parte");
+  chipsDe("dests", DESTS, "dest", "dest");
+  document.querySelectorAll("#tarefas .chip").forEach(function(b){ if(b.dataset.valor==="clausula") b.setAttribute("aria-pressed","true"); });
+
+  ["area","parte","dest","material"].forEach(function(id){ el(id).addEventListener("input", render); });
+  ["opt-passos","opt-naoconsta","opt-contraparte"].forEach(function(id){ el(id).addEventListener("change", render); });
+
+  // Copiar
+  el("copy").addEventListener("click", function(){
+    var btn=this, texto=el("out").textContent;
+    function ok(){ btn.textContent="Copiado"; btn.classList.add("done"); setTimeout(function(){btn.textContent="Copiar"; btn.classList.remove("done");},1800); }
+    function sel(){ var rg=document.createRange(); rg.selectNodeContents(el("out")); var s=window.getSelection(); s.removeAllRanges(); s.addRange(rg); ok(); }
+    if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(texto).then(ok).catch(sel); } else { sel(); }
   });
 
-  ["area","parte","dest","material"].forEach(function (id) {
-    document.getElementById(id).addEventListener("input", render);
+  // Guardados no dispositivo
+  var CHAVE="prompts-juridicos-guardados";
+  function lerGuardados(){ try{ return JSON.parse(localStorage.getItem(CHAVE)||"[]"); }catch(e){ return []; } }
+  function escreverGuardados(a){ try{ localStorage.setItem(CHAVE, JSON.stringify(a)); }catch(e){} }
+  function pintarGuardados(){
+    var a=lerGuardados(), box=el("savedbox"), ul=el("savedlist");
+    if(!a.length){ box.hidden=true; return; }
+    box.hidden=false; ul.innerHTML="";
+    a.forEach(function(item, i){
+      var li=document.createElement("li");
+      var carregar=document.createElement("button"); carregar.className="load"; carregar.textContent=item.nome;
+      carregar.addEventListener("click", function(){
+        estado.tarefa=item.tarefa;
+        el("area").value=item.area||""; el("parte").value=item.parte||""; el("dest").value=item.dest||""; el("material").value=item.material||"";
+        el("opt-passos").checked=item.passos; el("opt-naoconsta").checked=item.naoconsta; el("opt-contraparte").checked=item.contraparte;
+        document.querySelectorAll("#tarefas .chip").forEach(function(c){ c.setAttribute("aria-pressed", c.dataset.valor===item.tarefa?"true":"false"); });
+        sincronizarChip("areas","area"); sincronizarChip("partes","parte"); sincronizarChip("dests","dest");
+        render();
+      });
+      var apagar=document.createElement("button"); apagar.className="del"; apagar.setAttribute("aria-label","Apagar"); apagar.textContent="×";
+      apagar.addEventListener("click", function(){ var arr=lerGuardados(); arr.splice(i,1); escreverGuardados(arr); pintarGuardados(); });
+      li.appendChild(carregar); li.appendChild(apagar); ul.appendChild(li);
+    });
+  }
+  el("save").addEventListener("click", function(){
+    var nome=(TAREFAS[estado.tarefa].rotulo)+(val("area")?" · "+val("area"):"");
+    var arr=lerGuardados();
+    arr.unshift({nome:nome, tarefa:estado.tarefa, area:val("area"), parte:val("parte"), dest:val("dest"), material:val("material"),
+      passos:el("opt-passos").checked, naoconsta:el("opt-naoconsta").checked, contraparte:el("opt-contraparte").checked});
+    if(arr.length>12) arr=arr.slice(0,12);
+    escreverGuardados(arr); pintarGuardados();
+    var b=this; var t=b.textContent; b.textContent="Guardado"; setTimeout(function(){b.textContent=t;},1500);
   });
-  ["opt-passos","opt-naoconsta","opt-contraparte"].forEach(function (id) {
-    document.getElementById(id).addEventListener("change", render);
-  });
-
-  document.getElementById("copy").addEventListener("click", function () {
-    var btn = this;
-    var texto = document.getElementById("out").textContent;
-    function sucesso() {
-      btn.textContent = "Copiado";
-      btn.classList.add("done");
-      setTimeout(function () { btn.textContent = "Copiar"; btn.classList.remove("done"); }, 1800);
-    }
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(texto).then(sucesso).catch(seleccionar);
-    } else { seleccionar(); }
-    function seleccionar() {
-      var r = document.createRange();
-      r.selectNodeContents(document.getElementById("out"));
-      var s = window.getSelection();
-      s.removeAllRanges(); s.addRange(r);
-      sucesso();
-    }
-  });
+  pintarGuardados();
 
   render();
-</script>
 
+  // Instalação como app
+  var adiado=null;
+  window.addEventListener("beforeinstallprompt", function(e){ e.preventDefault(); adiado=e; el("install").hidden=false; });
+  el("install").addEventListener("click", function(){
+    if(!adiado) return;
+    adiado.prompt(); adiado.userChoice.finally(function(){ adiado=null; el("install").hidden=true; });
+  });
+  window.addEventListener("appinstalled", function(){ el("install").hidden=true; });
+
+  // Service worker, para funcionar offline depois da primeira visita
+  if("serviceWorker" in navigator){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
+</script>
 </body>
 </html>
